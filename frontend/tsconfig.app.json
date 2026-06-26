@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+
+    // ── Target ───────────────────────────────────────────────────────────────
+    // ES2020 is supported by all modern browsers. Canvas APIs we use are in ES2020.
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+
+    // ── Module system ────────────────────────────────────────────────────────
+    // "bundler" mode is correct for Vite — it handles module resolution itself.
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    // ── React ────────────────────────────────────────────────────────────────
+    // "react-jsx" uses the new JSX transform (no need to import React in every file)
+    "jsx": "react-jsx",
+
+    // ── Strict mode ──────────────────────────────────────────────────────────
+    // In a hospital project, strict TypeScript is non-negotiable.
+    // Strict mode catches null/undefined bugs, implicit any, unreachable code, etc.
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    // ── Path aliases ─────────────────────────────────────────────────────────
+    // "@/components/..." instead of "../../../components/..."
+    // All imports start from src/ as the root.
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    // ── Misc ─────────────────────────────────────────────────────────────────
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}
