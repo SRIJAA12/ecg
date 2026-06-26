@@ -1,0 +1,25 @@
+# =============================================================================
+# Healthcare Simulation Monitor — Python Requirements
+# =============================================================================
+#
+# Install with:   pip install -r requirements.txt
+#
+# Python version: 3.12+
+# =============================================================================
+
+# ─── PhysioNet / Signal I/O ──────────────────────────────────────────────────
+wfdb==4.1.2               # Read MIT-BIH PhysioNet records (.dat, .hea, .atr)
+
+# ─── Numerical / Signal Processing ──────────────────────────────────────────
+numpy==1.26.4             # Array operations on ECG samples
+scipy==1.13.1             # Filters, peak detection, resampling
+
+# ─── Data Handling ───────────────────────────────────────────────────────────
+pandas==2.2.2             # Tabular data, annotation handling
+
+# ─── Debug Visualization (development only) ──────────────────────────────────
+matplotlib==3.9.0         # Plot raw ECG signals during development
+
+# ─── HTTP / Download ─────────────────────────────────────────────────────────
+requests==2.32.3          # Used in download_dataset.py for PhysioNet access
+tqdm==4.66.4              # Progress bars for downloads
