@@ -1,0 +1,173 @@
+/*
+ * src/components/waveform/TwelveLeadView.css
+ * ============================================
+ * Full-screen modal overlay for the 12-lead ECG printout.
+ */
+
+/* ── Overlay (full-screen dimmed backdrop) ─────────────────────────────── */
+
+.tl-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: tl-fade-in 0.2s ease-out;
+}
+
+@keyframes tl-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.tl-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 5, 10, 0.88);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+}
+
+/* ── Modal container ──────────────────────────────────────────────────── */
+
+.tl-modal {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(1200px, calc(100vw - 40px));
+  height: min(820px, calc(100vh - 40px));
+  background: #fff8f8;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(200, 60, 60, 0.35),
+    0 24px 80px rgba(0, 0, 0, 0.7);
+  animation: tl-slide-up 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes tl-slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Header ───────────────────────────────────────────────────────────── */
+
+.tl-modal__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #1a1a2e;
+  border-bottom: 2px solid rgba(200, 60, 60, 0.5);
+  flex-shrink: 0;
+}
+
+.tl-modal__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.03em;
+  margin: 0;
+}
+
+.tl-modal__meta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  flex: 1;
+}
+
+.tl-close-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.tl-close-btn:hover {
+  background: rgba(240, 60, 60, 0.7);
+  color: #fff;
+}
+
+/* ── Canvas wrap ──────────────────────────────────────────────────────── */
+
+.tl-canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.tl-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Loading / error states ───────────────────────────────────────────── */
+
+.tl-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #555;
+  background: #fff8f8;
+  z-index: 2;
+}
+
+.tl-state--error {
+  color: #c0392b;
+}
+
+@keyframes tl-spin {
+  to { transform: rotate(360deg); }
+}
+
+.tl-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(200,60,60,0.2);
+  border-top-color: rgba(200,60,60,0.8);
+  border-radius: 50%;
+  animation: tl-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+
+.tl-modal__footer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 7px 16px;
+  background: #1a1a2e;
+  border-top: 1px solid rgba(200, 60, 60, 0.3);
+  font-size: 10px;
+  color: rgba(255,255,255,0.45);
+  font-family: 'Courier New', monospace;
+  flex-shrink: 0;
+}
+
+.tl-footer-link a {
+  color: rgba(100, 200, 255, 0.7);
+  text-decoration: none;
+}
+.tl-footer-link a:hover {
+  color: rgba(100, 200, 255, 1);
+  text-decoration: underline;
+}

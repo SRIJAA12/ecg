@@ -80,3 +80,24 @@ coverage/
 .coverage
 htmlcov/
 .pytest_cache/
+venv/
+.venv/
+env/
+
+zip_extracted/
+*.zip
+*.h5
+*.pt
+*.pth
+zip_extracted/
+datasets/
+*.zip
+*.dat
+*.hea
+*.atr
+*.xws
+
+# Models
+*.h5
+*.pth
+*.pt

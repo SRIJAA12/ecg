@@ -1,0 +1,198 @@
+/*
+ * src/pages/MonitorPage.css
+ * ==========================
+ * Full-page layout for the ECG monitor.
+ * Clinical dark aesthetic inspired by Philips IntelliVue.
+ */
+
+/* ── Page shell ──────────────────────────────────────────────────────────── */
+
+.monitor-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-base);
+  font-family: var(--font-ui);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.monitor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-8);
+  background: var(--color-bg-panel);
+  border-bottom: 1px solid var(--color-bg-border);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-raised);
+}
+
+.monitor-header__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.monitor-header__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* Blinking live dot */
+.monitor-live-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--color-status-normal);
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px var(--color-status-normal);
+}
+
+.monitor-title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.015em;
+}
+
+.monitor-source {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.monitor-phase {
+  font-size: var(--text-xs);
+}
+
+/* ── Main content ────────────────────────────────────────────────────────── */
+
+.monitor-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-8);
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ── Unified Monitor Track ─────────────────────────────────────────────────── */
+
+.monitor-track {
+  display: flex;
+  align-items: stretch;
+  background: var(--ecg-canvas-bg);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-panel);
+}
+
+/* Canvas gets all remaining horizontal space */
+.monitor-track__canvas {
+  flex: 1;
+  min-width: 0;
+  /* Separate the canvas from the vitals with a subtle line, or no line at all.
+     Clinical monitors often have no line. We'll leave it seamless. */
+}
+
+/* ── Vitals readout (integrated) ─────────────────────────────────────────── */
+
+.monitor-track__vitals {
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
+  justify-content: flex-start;
+  /* Dark background seamlessly extending from canvas */
+  background: var(--ecg-canvas-bg);
+}
+
+/* ── Vital block (HR) ────────────────────────────────────────────────────── */
+
+.vital-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.vital-block__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: -10px; /* pull the big number up slightly */
+}
+
+.vital-block__label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  color: var(--color-status-normal);
+}
+
+.vital-block__alarm {
+  font-size: 9px;
+  line-height: 1.1;
+  color: var(--color-status-normal);
+  opacity: 0.6;
+  text-align: right;
+  margin-right: 8px;
+}
+
+.vital-block__pulse {
+  font-size: 10px;
+  line-height: 1.1;
+  color: #ffb300; /* Amber color from reference image for Pulse */
+  text-align: right;
+}
+
+.vital-block__pulse .pulse-val {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+}
+
+.vital-block__value {
+  font-size: 80px; /* Extremely large digital font */
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  color: var(--color-status-normal);
+  text-align: right;
+  letter-spacing: -0.05em;
+  font-family: var(--font-mono);
+}
+
+.vital-block--warning .vital-block__label,
+.vital-block--warning .vital-block__value,
+.vital-block--warning .vital-block__alarm {
+  color: var(--color-status-warning);
+}
+
+.vital-block--critical .vital-block__label,
+.vital-block--critical .vital-block__value,
+.vital-block--critical .vital-block__alarm {
+  color: var(--color-status-critical);
+  animation: pulseGlow 1.5s ease-in-out infinite;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .monitor-header {
+    padding: var(--space-3) var(--space-4);
+  }
+  .monitor-main {
+    padding: var(--space-4);
+  }
+  .monitor-track {
+    flex-direction: column;
+  }
+  .monitor-track__vitals {
+    width: 100%;
+    flex-direction: row;
+    padding: var(--space-3);
+  }
+}
+

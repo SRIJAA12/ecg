@@ -382,8 +382,8 @@ def extract_vt(ecg: ECGRecord, annotations: ECGAnnotations) -> ExtractionResult:
 
     Strategy:
       - Scan aux_notes for '(VT' rhythm label
-      - Find the longest VT run (several seconds of sustained VT)
-      - Extract 4 consecutive VT beats from the middle of that run
+      - Find the longest VT run
+      - Extract 3 consecutive VT beats
 
     Key VT characteristics to show:
       - Rapid rate (>100 bpm, usually 140–250 bpm)
@@ -391,11 +391,14 @@ def extract_vt(ecg: ECGRecord, annotations: ECGAnnotations) -> ExtractionResult:
       - Regular R-R intervals (monomorphic VT)
       - AV dissociation (P waves dissociated from QRS)
 
+    Note: Record 207's (VT segments are short (4-5 beats). We use 3 cycles
+    which is sufficient to visually demonstrate the VT morphology and rate.
+
     beat_duration_ms: Mean R-R within the VT run (reflects the fast rate).
     """
     rhythm = "vt"
     record_id = ecg.record_id
-    n_cycles = 4
+    n_cycles = 3  # 3 VT beats is enough to show morphology; segments are short
 
     # Find VT rhythm segments
     vt_segments = get_rhythm_segments(annotations, "(VT", ecg)
@@ -420,18 +423,18 @@ def extract_vt(ecg: ECGRecord, annotations: ECGAnnotations) -> ExtractionResult:
         if seg_start_sample <= s <= seg_end_sample
     ]
 
-    if len(beat_indices_in_seg) < n_cycles + 2:
-        # If the longest segment is too short, try all segments combined
+    # Need at least n_cycles+1 annotation points to span n_cycles complete beats
+    if len(beat_indices_in_seg) < n_cycles + 1:
         logger.warning(
-            f"[{rhythm}] Longest VT segment has only {len(beat_indices_in_seg)} beats. "
-            f"Trying shorter segments..."
+            f"[{rhythm}] Longest VT segment has only {len(beat_indices_in_seg)} annotations. "
+            f"Trying all segments..."
         )
         for seg in sorted(vt_segments, key=lambda s: s[1] - s[0], reverse=True):
             beat_indices_in_seg = [
                 i for i, s in enumerate(annotations.samples)
                 if seg[0] <= s <= seg[1]
             ]
-            if len(beat_indices_in_seg) >= n_cycles + 2:
+            if len(beat_indices_in_seg) >= n_cycles + 1:
                 seg_start_sample, seg_end_sample = seg
                 break
         else:
@@ -439,10 +442,15 @@ def extract_vt(ecg: ECGRecord, annotations: ECGAnnotations) -> ExtractionResult:
                 f"Record {record_id}: No VT segment has enough beats ({n_cycles} required)."
             )
 
-    # Take from the middle of the segment
-    mid = len(beat_indices_in_seg) // 2
-    start_beat_idx = beat_indices_in_seg[mid]
-    end_beat_idx   = beat_indices_in_seg[mid + n_cycles]
+    # For large segments: take from the middle for best signal quality.
+    # For small segments (common in Record 207): take from the start.
+    if len(beat_indices_in_seg) > n_cycles + 2:
+        mid = len(beat_indices_in_seg) // 2
+        start_beat_idx = beat_indices_in_seg[mid]
+        end_beat_idx   = beat_indices_in_seg[mid + n_cycles]
+    else:
+        start_beat_idx = beat_indices_in_seg[0]
+        end_beat_idx   = beat_indices_in_seg[n_cycles]
 
     r_start = int(annotations.samples[start_beat_idx])
     r_end   = int(annotations.samples[end_beat_idx])
@@ -471,22 +479,27 @@ def extract_vt(ecg: ECGRecord, annotations: ECGAnnotations) -> ExtractionResult:
 
 def extract_vf(ecg: ECGRecord, annotations: ECGAnnotations) -> ExtractionResult:
     """
-    Extract a Ventricular Fibrillation (VF) segment from Record 208.
+    Extract a Ventricular Fibrillation (VF) segment from Record 207.
 
     Strategy:
       - VF has NO organized beats — we cannot use R-peak annotations.
-      - Instead, we scan aux_notes for '(VFL' (ventricular flutter/fibrillation)
+      - Scan aux_notes for '(VFL' (ventricular flutter/fibrillation).
+        Record 207 contains multiple long (VFL segments (10-14 seconds each).
       - Extract a fixed 2.0-second window from the middle of the VF segment
-        (2 seconds of VF waveform clearly shows the chaotic undulating baseline)
+        (2 seconds clearly shows the chaotic undulating VF baseline)
+
+    Why Record 207 instead of 208?
+      Record 208 only has (N and (T (ventricular trigeminy) rhythm labels —
+      no VF/VFL episodes are annotated. Record 207 has abundant (VFL segments.
+      Ventricular flutter (VFL) is clinically identical to VF for visualization.
 
     Key VF characteristics to show:
       - No organized P waves or QRS complexes
-      - Chaotic irregular oscillations (150–500 Hz dominant frequency)
+      - Chaotic irregular oscillations
       - Varying amplitude
 
-    beat_duration_ms: Set to 200ms (equivalent to 300 bpm) — the fastest
-    physiologically meaningful rate. Used by the React player for scaling.
-    In practice, VF ignores heart rate — the waveform is always chaotic.
+    beat_duration_ms: Set to 200ms (equivalent to 300 bpm) — used by the
+    React player for baseline scroll speed. VF has no real beat rate.
     """
     rhythm = "vf"
     record_id = ecg.record_id

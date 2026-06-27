@@ -125,7 +125,7 @@ RHYTHM_PIPELINE: List[RhythmConfig] = [
     ),
     RhythmConfig(
         rhythm="vf",
-        record_id="208",
+        record_id="207",   # 207 has (VFL annotations; 208 has only (N and (T (trigeminy)
         extractor=extract_vf,
         label="Ventricular Fibrillation",
     ),
