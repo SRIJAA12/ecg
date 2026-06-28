@@ -1,0 +1,58 @@
+/* src/styles/global.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg-deep:       #080c10;
+  --bg-panel:      #0d1117;
+  --bg-card:       #111820;
+  --bg-elevated:   #1a2332;
+  --border:        #1e2d3d;
+  --border-bright: #2a3f55;
+
+  --text-primary:  #e6edf3;
+  --text-muted:    #7d8590;
+  --text-dim:      #4a5568;
+
+  --green:         #2dba4e;
+  --green-glow:    rgba(45, 186, 78, 0.25);
+  --yellow:        #e3a008;
+  --yellow-glow:   rgba(227, 160, 8, 0.25);
+  --red:           #f85149;
+  --red-glow:      rgba(248, 81, 73, 0.35);
+  --blue:          #58a6ff;
+  --blue-glow:     rgba(88, 166, 255, 0.2);
+  --cyan:          #39d353;
+
+  /* ECG trace */
+  --ecg-normal:   #00ff88;
+  --ecg-warning:  #ffb700;
+  --ecg-critical: #ff4444;
+
+  --radius-sm: 4px;
+  --radius:    8px;
+  --radius-lg: 12px;
+
+  font-family: 'Inter', system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; width: 100%; overflow: hidden; }
+body { background: var(--bg-deep); color: var(--text-primary); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-panel); }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+
+/* Utility */
+.mono { font-family: 'JetBrains Mono', monospace; }
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-sm); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; }
+.badge--normal   { background: rgba(45,186,78,.15);  color: var(--green); border: 1px solid rgba(45,186,78,.3); }
+.badge--warning  { background: rgba(227,160,8,.15);  color: var(--yellow); border: 1px solid rgba(227,160,8,.3); }
+.badge--critical { background: rgba(248,81,73,.15);  color: var(--red); border: 1px solid rgba(248,81,73,.3); animation: pulse-crit 1.2s ease-in-out infinite; }
+@keyframes pulse-crit { 0%,100%{opacity:1} 50%{opacity:.55} }
+
+button { font-family: inherit; cursor: pointer; border: none; }
+select { font-family: inherit; }
+input  { font-family: inherit; }

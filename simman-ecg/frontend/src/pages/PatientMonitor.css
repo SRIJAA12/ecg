@@ -1,0 +1,67 @@
+/* src/pages/PatientMonitor.css */
+.monitor-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #080c10;
+}
+
+/* Header */
+.monitor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: #0d1117;
+  border-bottom: 1px solid #1e2d3d;
+  flex-shrink: 0;
+}
+.monitor-header__brand { display: flex; align-items: center; gap: 10px; }
+.monitor-header__cross { font-size: 20px; }
+.monitor-header__title {
+  font-size: 18px; font-weight: 700;
+  background: linear-gradient(135deg, #00ff88, #58a6ff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.monitor-header__subtitle { font-size: 12px; color: var(--text-muted); }
+.monitor-header__info { display: flex; align-items: center; gap: 12px; }
+.monitor-header__chip {
+  padding: 3px 10px; border-radius: 20px;
+  background: #1a2332; border: 1px solid #2a3f55;
+  font-size: 11px; font-weight: 600; color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+.monitor-header__btn {
+  padding: 6px 14px; border-radius: 6px;
+  background: linear-gradient(135deg, #00ff88, #00cc6e);
+  color: #080c10; font-weight: 700; font-size: 12px;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.monitor-header__btn:hover { opacity: 0.85; }
+
+/* Main */
+.monitor-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+.monitor-canvas-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 20px;
+}
+
+/* Footer */
+.monitor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 20px;
+  background: #0d1117;
+  border-top: 1px solid #1e2d3d;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}

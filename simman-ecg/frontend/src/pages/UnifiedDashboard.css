@@ -1,0 +1,219 @@
+/* src/pages/UnifiedDashboard.css */
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #080c10;
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+/* HEADER */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: #0d1117;
+  border-bottom: 1px solid #1e2d3d;
+  flex-shrink: 0;
+}
+.dashboard-brand {
+  font-size: 16px;
+  font-weight: 700;
+  color: #58a6ff;
+  letter-spacing: 0.05em;
+}
+.ws-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.ws-status--on {
+  background: rgba(45,186,78,.15);
+  color: #3fb950;
+  border: 1px solid rgba(63,185,80,.4);
+}
+.ws-status--off {
+  background: rgba(248,81,73,.15);
+  color: #f85149;
+  border: 1px solid rgba(248,81,73,.4);
+  animation: pulse-crit 1.5s infinite;
+}
+
+/* CONTENT LAYOUT */
+.dashboard-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* LEFT PANEL (Monitor) */
+.monitor-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #1e2d3d;
+  background: #000;
+}
+.vitals-strip {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: #0d1117;
+  border-bottom: 1px solid #1e2d3d;
+}
+.vital-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+}
+.vital-label {
+  font-size: 10px;
+  color: #8b949e;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+.vital-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+.vital-value--normal { color: #3fb950; }
+.vital-value--warning { color: #d29922; }
+.vital-value--critical { color: #f85149; animation: pulse-crit 1.2s infinite; }
+.vital-unit {
+  font-size: 11px;
+  color: #8b949e;
+  margin-top: 2px;
+}
+.rhythm-card { flex: 1; }
+.vital-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #c9d1d9;
+  margin-top: 4px;
+}
+.lead-card select {
+  margin-top: 6px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.waveform-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+}
+
+/* RIGHT PANEL (Controls) */
+.controls-panel {
+  width: 400px;
+  flex-shrink: 0;
+  background: #0d1117;
+  display: flex;
+  flex-direction: column;
+}
+.controls-scroll {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.control-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 16px;
+}
+.control-card h3 {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c9d1d9;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.control-help {
+  margin: 0 0 12px 0;
+  font-size: 11px;
+  color: #8b949e;
+}
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.control-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+.control-row label span {
+  font-size: 11px;
+  color: #8b949e;
+}
+.control-row input[type=number],
+.control-row select {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.control-row input[type=range] {
+  flex: 1;
+  accent-color: #58a6ff;
+}
+.val-badge {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #58a6ff;
+  min-width: 60px;
+  text-align: center;
+}
+
+/* Rhythm List */
+.rhythm-select {
+  width: 100%;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.rhythm-select optgroup {
+  font-weight: 700;
+  color: #8b949e;
+  background: #161b22;
+}
+.rhythm-select option {
+  color: #c9d1d9;
+  background: #0d1117;
+}
