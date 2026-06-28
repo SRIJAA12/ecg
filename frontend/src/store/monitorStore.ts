@@ -2,63 +2,40 @@ import { create } from "zustand";
 import type {
   MonitorState,
   MonitorActions,
-  PTBCondition,
-  PTBWaveformData,
+  ECGRhythm,
+  TransferMode,
 } from "@/types/ecg";
 import {
   HR_DEFAULT,
-  CONDITION_DEFAULT,
+  RHYTHM_DEFAULT,
+  TRANSFER_MODE_DEFAULT,
+  TRANSFER_TIME_DEFAULT,
 } from "@/types/ecg";
 
 type MonitorStore = MonitorState & MonitorActions;
 
-export const useMonitorStore = create<MonitorStore>((set, get) => ({
+export const useMonitorStore = create<MonitorStore>((set) => ({
   // ── Initial State ──────────────────────────────────────────────────────────
   heartRate: HR_DEFAULT,
-  condition: CONDITION_DEFAULT,
-  playbackSpeed: 1.0,
-
-  waveformData: null,
-  isLoading: false,
-  error: null,
+  rhythm: RHYTHM_DEFAULT,
+  transferMode: TRANSFER_MODE_DEFAULT,
+  transferTime: TRANSFER_TIME_DEFAULT,
 
   // ── Actions ────────────────────────────────────────────────────────────────
   setHeartRate: (bpm: number) => {
-    set({
-      heartRate: bpm,
-      playbackSpeed: bpm / HR_DEFAULT,
-    });
+    set({ heartRate: bpm });
   },
 
-  setCondition: (condition: PTBCondition) => {
-    set({
-      condition,
-      waveformData: null,
-      isLoading: true,
-      error: null,
-    });
+  setRhythm: (rhythm: ECGRhythm) => {
+    set({ rhythm });
   },
 
-  setWaveformData: (data: PTBWaveformData) => {
-    const { heartRate } = get();
-    set({
-      waveformData: data,
-      isLoading: false,
-      error: null,
-      playbackSpeed: heartRate / HR_DEFAULT,
-    });
+  setTransferMode: (mode: TransferMode) => {
+    set({ transferMode: mode });
   },
 
-  setLoading: (loading: boolean) => {
-    set({ isLoading: loading });
-  },
-
-  setError: (error: string | null) => {
-    set({
-      error,
-      isLoading: false,
-      waveformData: error ? null : get().waveformData,
-    });
+  setTransferTime: (seconds: number) => {
+    set({ transferTime: seconds });
   },
 }));
 
@@ -67,8 +44,6 @@ export const useMonitorStore = create<MonitorStore>((set, get) => ({
 // =============================================================================
 
 export const selectHeartRate = (s: MonitorStore) => s.heartRate;
-export const selectCondition = (s: MonitorStore) => s.condition;
-export const selectPlaybackSpeed = (s: MonitorStore) => s.playbackSpeed;
-export const selectWaveformData = (s: MonitorStore) => s.waveformData;
-export const selectIsLoading = (s: MonitorStore) => s.isLoading;
-export const selectError = (s: MonitorStore) => s.error;
+export const selectRhythm = (s: MonitorStore) => s.rhythm;
+export const selectTransferMode = (s: MonitorStore) => s.transferMode;
+export const selectTransferTime = (s: MonitorStore) => s.transferTime;

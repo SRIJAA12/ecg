@@ -1,12 +1,14 @@
 /**
  * src/components/monitor/ControlPanel.tsx
  * =========================================
- * Groups the HR slider and rhythm dropdown into a single panel.
+ * Groups the HR slider, rhythm dropdown, and transfer controls into a single panel.
  * Purely a layout component — delegates to child controls.
  */
 
 import HeartRateSlider from "@/components/controls/HeartRateSlider";
 import RhythmDropdown from "@/components/controls/RhythmDropdown";
+import TransferFunctionSelect from "@/components/controls/TransferFunctionSelect";
+import TransferTimeSlider from "@/components/controls/TransferTimeSlider";
 import "./ControlPanel.css";
 
 export default function ControlPanel() {
@@ -15,6 +17,10 @@ export default function ControlPanel() {
       <HeartRateSlider />
       <div className="control-panel__divider" aria-hidden="true" />
       <RhythmDropdown />
+      <div className="control-panel__divider" aria-hidden="true" />
+      <TransferFunctionSelect />
+      <div className="control-panel__divider" aria-hidden="true" />
+      <TransferTimeSlider />
     </section>
   );
 }

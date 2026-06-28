@@ -19,7 +19,7 @@
 
 import { useState } from "react";
 import { useMonitorStore } from "@/store/monitorStore";
-import { CONDITION_SEVERITY } from "@/types/ecg";
+import { RHYTHM_SEVERITY } from "@/types/ecg";
 import ECGCanvas from "@/components/waveform/ECGCanvas";
 import ControlPanel from "@/components/monitor/ControlPanel";
 import TwelveLeadView from "@/components/waveform/TwelveLeadView";
@@ -28,8 +28,8 @@ import "./MonitorPage.css";
 export default function MonitorPage() {
   const [show12Lead, setShow12Lead] = useState(false);
   const heartRate = useMonitorStore((s) => s.heartRate);
-  const condition = useMonitorStore((s) => s.condition);
-  const severity  = CONDITION_SEVERITY[condition];
+  const rhythm = useMonitorStore((s) => s.rhythm);
+  const severity  = RHYTHM_SEVERITY[rhythm];
 
   return (
     <div className="monitor-page">
@@ -47,8 +47,8 @@ export default function MonitorPage() {
           >
             📄 Print 12-Lead ECG
           </button>
-          <span className="monitor-source">PTB Diagnostic ECG Database</span>
-          <span className="badge badge--normal monitor-phase">Phase 2</span>
+          <span className="monitor-source">Real-time ECG Generation</span>
+          <span className="badge badge--normal monitor-phase">Phase 3</span>
         </div>
       </header>
 

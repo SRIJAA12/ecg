@@ -1,15 +1,15 @@
 /**
  * src/components/controls/RhythmDropdown.tsx
  * ============================================
- * Condition selector with grouped optgroups matching the Laerdal interface.
+ * Rhythm selector with grouped optgroups matching the Laerdal interface.
  */
 
 import { useMonitorStore } from "@/store/monitorStore";
 import {
-  CONDITION_LABELS,
-  CONDITION_SEVERITY,
-  CONDITION_GROUPS,
-  type PTBCondition,
+  RHYTHM_LABELS,
+  RHYTHM_SEVERITY,
+  RHYTHM_GROUPS,
+  type ECGRhythm,
 } from "@/types/ecg";
 import "./controls.css";
 
@@ -20,11 +20,10 @@ const SEVERITY_BADGE: Record<string, string> = {
 };
 
 export default function RhythmDropdown() {
-  const condition    = useMonitorStore((s) => s.condition);
-  const setCondition = useMonitorStore((s) => s.setCondition);
-  const isLoading    = useMonitorStore((s) => s.isLoading);
+  const rhythm    = useMonitorStore((s) => s.rhythm);
+  const setRhythm = useMonitorStore((s) => s.setRhythm);
 
-  const severity = CONDITION_SEVERITY[condition];
+  const severity = RHYTHM_SEVERITY[rhythm];
 
   return (
     <div className="control-group">
@@ -39,16 +38,15 @@ export default function RhythmDropdown() {
         <select
           id="rhythm-dropdown"
           className="control-select"
-          value={condition}
-          disabled={isLoading}
-          onChange={(e) => setCondition(e.target.value as PTBCondition)}
-          aria-label="Select cardiac condition"
+          value={rhythm}
+          onChange={(e) => setRhythm(e.target.value as ECGRhythm)}
+          aria-label="Select cardiac rhythm"
         >
-          {CONDITION_GROUPS.map((group) => (
+          {RHYTHM_GROUPS.map((group) => (
             <optgroup key={group.label} label={group.label}>
-              {group.conditions.map((c) => (
-                <option key={c} value={c}>
-                  {CONDITION_LABELS[c]}
+              {group.rhythms.map((r) => (
+                <option key={r} value={r}>
+                  {RHYTHM_LABELS[r]}
                 </option>
               ))}
             </optgroup>

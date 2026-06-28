@@ -2,13 +2,14 @@
  * src/hooks/useECGAnimation.ts
  * ============================
  * Drives the ECG canvas animation using requestAnimationFrame.
- * Reads Lead II from the PTB 12-lead data and scrolls it at 25 mm/s.
+ * Uses real-time mathematical ECG generation instead of pre-recorded datasets.
  */
 
 import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
-import type { PTBWaveformData, PTBCondition } from "@/types/ecg";
-import { CONDITION_SEVERITY } from "@/types/ecg";
+import type { ECGRhythm } from "@/types/ecg";
+import { RHYTHM_SEVERITY } from "@/types/ecg";
+import { getECGGenerator } from "@/utils/ecgGenerator";
 
 // =============================================================================
 // CONSTANTS
@@ -17,6 +18,7 @@ import { CONDITION_SEVERITY } from "@/types/ecg";
 const DISPLAY_DURATION_SEC = 6;
 const AMPLITUDE_RATIO = 0.38;
 const CANVAS_BG = "#060a10";
+const SAMPLE_RATE = 250; // Hz
 
 const GRID_MAJOR_COLOR  = "rgba(0, 230, 118, 0.11)";
 const GRID_MINOR_COLOR  = "rgba(0, 230, 118, 0.045)";
@@ -41,18 +43,32 @@ const SEVERITY_GLOW: Record<string, number> = {
 
 export function useECGAnimation(
   canvasRef: RefObject<HTMLCanvasElement | null>,
-  waveformData: PTBWaveformData | null,
-  playbackSpeed: number,
-  condition: PTBCondition
+  rhythm: ECGRhythm,
+  heartRate: number,
+  transferMode: "immediate" | "linear" | "exponential",
+  transferTime: number
 ): void {
-  const speedRef = useRef(playbackSpeed);
-  useEffect(() => {
-    speedRef.current = playbackSpeed;
-  }, [playbackSpeed]);
-
-  const headIndexRef     = useRef(0.0);
+  const generatorRef = useRef(getECGGenerator());
   const lastTimestampRef = useRef(0);
-  const rafRef           = useRef(0);
+  const rafRef = useRef(0);
+  const elapsedTimeRef = useRef(0);
+
+  // Update generator parameters when store changes
+  useEffect(() => {
+    generatorRef.current.setRhythm(rhythm);
+  }, [rhythm]);
+
+  useEffect(() => {
+    generatorRef.current.setHeartRate(heartRate);
+  }, [heartRate]);
+
+  useEffect(() => {
+    generatorRef.current.setTransferMode(transferMode);
+  }, [transferMode]);
+
+  useEffect(() => {
+    generatorRef.current.setTransferTime(transferTime);
+  }, [transferTime]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -61,23 +77,12 @@ export function useECGAnimation(
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const severity = CONDITION_SEVERITY[condition];
+    const severity = RHYTHM_SEVERITY[rhythm];
     const traceColor = SEVERITY_COLORS[severity] ?? "#00e676";
     const glowBlur   = SEVERITY_GLOW[severity] ?? 3;
 
-    // If no waveform yet: draw a static flat dashed line
-    if (!waveformData) {
-      drawFlatLine(ctx, canvas, traceColor);
-      return;
-    }
-
-    // Extract Lead II for the live scrolling monitor
-    const signal = waveformData.leads["II"] ?? waveformData.leads[Object.keys(waveformData.leads)[0]];
-    const fs = waveformData.fs;
-    const signalLength = signal.length;
-
-    headIndexRef.current     = 0.0;
     lastTimestampRef.current = 0;
+    elapsedTimeRef.current = DISPLAY_DURATION_SEC; // Start with time offset so left side shows waveform
 
     function frame(timestamp: number) {
       const dpr = window.devicePixelRatio || 1;
@@ -93,18 +98,13 @@ export function useECGAnimation(
       if (lastTimestampRef.current === 0) lastTimestampRef.current = timestamp;
       const deltaMs = Math.min(timestamp - lastTimestampRef.current, 100);
       lastTimestampRef.current = timestamp;
-
-      const advance = (deltaMs / 1000) * fs * speedRef.current;
-      headIndexRef.current = (headIndexRef.current + advance) % signalLength;
-      const head = headIndexRef.current;
+      elapsedTimeRef.current += deltaMs / 1000;
 
       ctx!.fillStyle = CANVAS_BG;
       ctx!.fillRect(0, 0, W, H);
 
-      const gridSamplesVisible = fs * DISPLAY_DURATION_SEC;
-      drawGrid(ctx!, W, H, fs, gridSamplesVisible);
+      drawGrid(ctx!, W, H, SAMPLE_RATE, SAMPLE_RATE * DISPLAY_DURATION_SEC);
 
-      const signalSamplesVisible = fs * DISPLAY_DURATION_SEC * speedRef.current;
       const centerY   = H / 2;
       const amplitude = H * AMPLITUDE_RATIO;
 
@@ -117,15 +117,16 @@ export function useECGAnimation(
       ctx!.shadowBlur  = glowBlur;
 
       let penDown = false;
-      const W_physical = canvas!.width;
+      const currentTime = elapsedTimeRef.current;
 
-      for (let physicalPx = 0; physicalPx < W_physical; physicalPx++) {
-        const px = physicalPx / dpr;
-        const samplesBack = (1 - physicalPx / (W_physical - 1)) * signalSamplesVisible;
-        const rawIdx    = head - samplesBack;
-        const sampleIdx = ((Math.round(rawIdx) % signalLength) + signalLength) % signalLength;
-        const value = signal[sampleIdx];
-        const y     = centerY - value * amplitude;
+      // Draw waveform from right to left (scrolling ECG)
+      // Right edge shows current time, left edge shows older time
+      for (let px = W; px >= 0; px -= 1) {
+        const timeOffset = (W - px) / W * DISPLAY_DURATION_SEC;
+        const sampleTime = currentTime - timeOffset;
+        
+        const value = generatorRef.current.generateSample(sampleTime);
+        const y = centerY - value * amplitude;
 
         if (!penDown) { ctx!.moveTo(px, y); penDown = true; }
         else          { ctx!.lineTo(px, y); }
@@ -140,8 +141,7 @@ export function useECGAnimation(
 
     rafRef.current = requestAnimationFrame(frame);
     return () => { cancelAnimationFrame(rafRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [waveformData, condition]);
+  }, [rhythm]);
 }
 
 // =============================================================================
@@ -183,31 +183,4 @@ function drawGrid(
   for (const offset of [-amplitude, amplitude]) {
     ctx.beginPath(); ctx.moveTo(0, centerY + offset); ctx.lineTo(W, centerY + offset); ctx.stroke();
   }
-}
-
-function drawFlatLine(
-  ctx: CanvasRenderingContext2D,
-  canvas: HTMLCanvasElement,
-  color: string
-): void {
-  const dpr = window.devicePixelRatio || 1;
-  const W = canvas.width  / dpr;
-  const H = canvas.height / dpr;
-  const centerY = H / 2;
-
-  ctx.save();
-  ctx.scale(dpr, dpr);
-  ctx.fillStyle = CANVAS_BG;
-  ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = color;
-  ctx.lineWidth   = 1.5;
-  ctx.globalAlpha = 0.3;
-  ctx.setLineDash([6, 4]);
-  ctx.beginPath();
-  ctx.moveTo(0, centerY);
-  ctx.lineTo(W, centerY);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.globalAlpha = 1;
-  ctx.restore();
 }
