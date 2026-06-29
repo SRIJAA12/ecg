@@ -6,9 +6,10 @@ import { useECGStore } from "../store/ecgStore";
 import { connect, disconnect } from "../engine/wsClient";
 import { useEffect } from "react";
 import {
-  RHYTHM_GROUPS, RHYTHM_LABELS, ALL_LEADS,
+  RHYTHM_GROUPS, RHYTHM_LABELS, RHYTHM_INTELLIGENCE, ALL_LEADS,
   type RhythmType, type ArtifactType, type TransferFn
 } from "../types/ecgState";
+import ECGAnalysisPanel from "../components/monitor/ECGAnalysisPanel";
 import "./InstructorConsole.css";
 
 export default function InstructorConsole() {
@@ -45,9 +46,30 @@ export default function InstructorConsole() {
   }, [ecgState?.session_id]);
 
   const rhythm = useECGStore((s) => s.rhythm) as RhythmType;
+  const rhythmProfile = useECGStore((s) => s.rhythmIntelligence);
+
+  // Rhythm-aware HR limits
+  const hrMin = rhythmProfile?.hrMin ?? 0;
+  const hrMax = rhythmProfile?.hrMax === 0 ? 0 : (rhythmProfile?.hrMax ?? 300);
+  const hrSliderMax = hrMax === 0 ? 0 : (hrMax > 0 ? hrMax : 300);
 
   const applyRhythm = (r: RhythmType) => {
-    sendCommand({ rhythm: r, transfer_time: transferTime, transfer_fn: transferFn });
+    const profile = RHYTHM_INTELLIGENCE[r];
+    const update: Parameters<typeof sendCommand>[0] = {
+      rhythm: r,
+      transfer_time: transferTime,
+      transfer_fn: transferFn,
+    };
+    // If current HR is outside the new rhythm's range, also set the default HR
+    if (profile) {
+      const curHR = heartRate;
+      if (profile.hrMax === 0) {
+        update.heart_rate = 0;
+      } else if (curHR < profile.hrMin || curHR > profile.hrMax) {
+        update.heart_rate = profile.defaultHr;
+      }
+    }
+    sendCommand(update);
   };
 
   const applyST = () => {
@@ -92,6 +114,9 @@ export default function InstructorConsole() {
           <div className="console-section-label">HR TREND</div>
           <SparkLine values={hrTrend} />
         </div>
+
+        {/* ECG Intelligence Panel */}
+        <ECGAnalysisPanel />
 
         <a href="/" className="console-monitor-btn">← Patient Monitor</a>
       </aside>
@@ -154,22 +179,36 @@ export default function InstructorConsole() {
           <section className="console-card console-card--half">
             <div className="console-card__title">HEART RATE</div>
             <div className="hr-control">
+              {rhythmProfile && (
+                <div className="hr-range-hint">
+                  Allowed: {hrMax === 0 ? "0" : `${hrMin}–${hrSliderMax}`} bpm
+                  {" "}<span className="hr-range-default">↳ Default: {rhythmProfile.defaultHr}</span>
+                </div>
+              )}
               <input
-                type="range" min={0} max={300} value={heartRate}
+                type="range"
+                min={hrMin}
+                max={hrSliderMax || 1}
+                value={Math.min(Math.max(heartRate, hrMin), hrSliderMax || 0)}
                 onChange={(e) => {
                   const next = Number(e.target.value);
                   sendCommand({ heart_rate: next, transfer_time: transferTime, transfer_fn: transferFn });
                 }}
                 className="hr-slider"
+                disabled={hrMax === 0}
               />
               <div className="hr-display">
                 <input
-                  type="number" min={0} max={300} value={heartRate}
+                  type="number"
+                  min={hrMin}
+                  max={hrSliderMax || 0}
+                  value={heartRate}
                   onChange={(e) => {
-                    const next = Number(e.target.value);
+                    const next = Math.min(Math.max(Number(e.target.value), hrMin), hrSliderMax || 0);
                     sendCommand({ heart_rate: next, transfer_time: transferTime, transfer_fn: transferFn });
                   }}
                   className="hr-input"
+                  disabled={hrMax === 0}
                 />
                 <span className="hr-unit">BPM</span>
               </div>

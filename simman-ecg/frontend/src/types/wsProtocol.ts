@@ -72,8 +72,24 @@ export interface SetStateMsg {
   payload: ECGStateUpdate;
 }
 
+export interface ECGIntelligenceMsg {
+  type: "ECG_INTELLIGENCE";
+  payload: {
+    rhythm:          string;
+    p_wave:          string;
+    t_wave:          string;
+    qrs_type:        string;
+    morphology_desc: string;
+    condition_desc:  string;
+    hr_min:          number;
+    hr_max:          number;
+    default_hr:      number;
+  };
+}
+
 export interface PingMsg  { type: "PING"; }
 export interface PongMsg  { type: "PONG"; }
 
-export type ServerMsg = StateSnapshotMsg | PongMsg;
+export type ServerMsg = StateSnapshotMsg | PongMsg | ECGIntelligenceMsg;
 export type ClientMsg = SetStateMsg | { type: "GET_STATE" } | PingMsg;
+

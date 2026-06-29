@@ -1,10 +1,10 @@
-// src/pages/UnifiedDashboard.tsx
 import { useEffect, useState } from "react";
 import { useECGStore } from "../store/ecgStore";
 import { connect, disconnect } from "../engine/wsClient";
 import ECGTrack from "../components/monitor/ECGTrack";
 import {
-  RHYTHM_GROUPS, RHYTHM_LABELS, ALL_LEADS,
+  RHYTHM_GROUPS, RHYTHM_LABELS, RHYTHM_INTELLIGENCE, ALL_LEADS,
+  getWaveVisibility, getWaveStatusLabel,
   type RhythmType, type ArtifactType, type TransferFn
 } from "../types/ecgState";
 import "./UnifiedDashboard.css";
@@ -19,6 +19,12 @@ export default function UnifiedDashboard() {
   const transferFn   = useECGStore((s) => s.transferFn);
   const rhythmValue  = useECGStore((s) => s.rhythm);
   const sendCommand = useECGStore((s) => s.sendCommand);
+  const rhythmProfile = useECGStore((s) => s.rhythmIntelligence);
+
+  // Rhythm-aware HR limits
+  const hrMin      = rhythmProfile?.hrMin ?? 0;
+  const hrMax      = rhythmProfile?.hrMax === 0 ? 0 : (rhythmProfile?.hrMax ?? 300);
+  const hrSliderMax = hrMax === 0 ? 0 : (hrMax > 0 ? hrMax : 300);
 
   const [stElev,        setStElev]        = useState(0);
   const [stDepr,        setStDepr]        = useState(0);
@@ -48,7 +54,14 @@ export default function UnifiedDashboard() {
 
   const handleRhythmChange = (r: RhythmType) => {
     console.log("Selected Rhythm:", r);
-    sendCommand({ rhythm: r, transfer_time: transferTime, transfer_fn: transferFn });
+    const profile = RHYTHM_INTELLIGENCE[r];
+    const update: Parameters<typeof sendCommand>[0] = { rhythm: r, transfer_time: transferTime, transfer_fn: transferFn };
+    if (profile) {
+      const curHR = heartRate;
+      if (profile.hrMax === 0) update.heart_rate = 0;
+      else if (curHR < profile.hrMin || curHR > profile.hrMax) update.heart_rate = profile.defaultHr;
+    }
+    sendCommand(update);
   };
 
   const handleSTChange = (elev: number, depr: number) => {
@@ -85,11 +98,44 @@ export default function UnifiedDashboard() {
               <div className="vital-label">HEART RATE</div>
               <div className={`vital-value vital-value--${severity}`}>{liveHeartRate}</div>
               <div className="vital-unit">BPM</div>
+              {rhythmProfile && (
+                <div className="vital-hr-range">
+                  {hrMax === 0 ? "0" : `${hrMin}–${hrSliderMax}`} bpm
+                </div>
+              )}
             </div>
             <div className="vital-card rhythm-card">
               <div className="vital-label">CURRENT RHYTHM</div>
               <div className="vital-text">{RHYTHM_LABELS[rhythm as RhythmType] ?? rhythm}</div>
             </div>
+            {/* Wave status badges */}
+            {rhythmProfile && (() => {
+              const { pFactor, tFactor } = getWaveVisibility(rhythm, liveHeartRate);
+              const pLabel = getWaveStatusLabel(pFactor, rhythmProfile.pWave);
+              const tLabel = getWaveStatusLabel(tFactor, rhythmProfile.tWave);
+              const pCls = pFactor <= 0 ? "wave-badge--absent" : pFactor < 0.85 ? "wave-badge--reduced" : "wave-badge--present";
+              const tCls = tFactor <= 0 ? "wave-badge--absent" : tFactor < 0.85 ? "wave-badge--reduced" : "wave-badge--present";
+              const qrsMap: Record<string,string> = { narrow:"#00d4ff", wide:"#ffb700", bizarre:"#ff4444", chaotic:"#ff0000", escape:"#a78bfa", sinusoidal:"#ff8c00" };
+              const qrsColor = qrsMap[rhythmProfile.qrsType] ?? "#888";
+              return (
+                <>
+                  <div className="vital-card wave-card">
+                    <div className="vital-label">P WAVE</div>
+                    <div className={`vital-wave-badge ${pCls}`}>{pLabel}</div>
+                  </div>
+                  <div className="vital-card wave-card">
+                    <div className="vital-label">T WAVE</div>
+                    <div className={`vital-wave-badge ${tCls}`}>{tLabel}</div>
+                  </div>
+                  <div className="vital-card wave-card">
+                    <div className="vital-label">QRS</div>
+                    <div className="vital-wave-badge" style={{ color: qrsColor }}>
+                      {rhythmProfile.qrsType.charAt(0).toUpperCase() + rhythmProfile.qrsType.slice(1)}
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
             <div className="vital-card lead-card">
               <div className="vital-label">MONITOR LEAD</div>
               <select value={selectedLead} onChange={(e) => setSelectedLead(e.target.value as any)}>
@@ -148,10 +194,29 @@ export default function UnifiedDashboard() {
 
             <div className="control-card">
               <h3>Heart Rate</h3>
-              <p className="control-help">Slider instantly updates target HR over transfer time.</p>
+              <p className="control-help">Constrained to the selected rhythm's clinical range.</p>
+              {rhythmProfile && (
+                <p className="control-help" style={{ color: '#3a8a5a', marginTop: -6 }}>
+                  Allowed: {hrMax === 0 ? "0" : `${hrMin}–${hrSliderMax}`} bpm · Default: {rhythmProfile.defaultHr}
+                </p>
+              )}
               <div className="control-row">
-                <input type="range" min={0} max={300} value={heartRate} onChange={(e) => handleHRChange(Number(e.target.value))} />
-                <input type="number" min={0} max={300} value={heartRate} onChange={(e) => handleHRChange(Number(e.target.value))} />
+                <input
+                  type="range"
+                  min={hrMin}
+                  max={hrSliderMax || 1}
+                  value={Math.min(Math.max(heartRate, hrMin), hrSliderMax || 0)}
+                  onChange={(e) => handleHRChange(Number(e.target.value))}
+                  disabled={hrMax === 0}
+                />
+                <input
+                  type="number"
+                  min={hrMin}
+                  max={hrSliderMax || 0}
+                  value={heartRate}
+                  onChange={(e) => handleHRChange(Math.min(Math.max(Number(e.target.value), hrMin), hrSliderMax || 0))}
+                  disabled={hrMax === 0}
+                />
                 <span className="val-badge">{heartRate} bpm</span>
               </div>
             </div>

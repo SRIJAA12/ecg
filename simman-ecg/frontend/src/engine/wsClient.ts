@@ -79,6 +79,8 @@ export function connect(): void {
         const msg = JSON.parse(event.data as string) as ServerMsg;
         if (msg.type === "STATE_SNAPSHOT") {
           useECGStore.getState().onState(msg.payload);
+        } else if (msg.type === "ECG_INTELLIGENCE") {
+          useECGStore.getState().onIntelligence(msg.payload);
         }
       } catch (e) {
         console.warn("[WS] Failed to parse message", e);

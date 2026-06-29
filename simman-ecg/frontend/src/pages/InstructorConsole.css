@@ -111,6 +111,18 @@
   font-weight: 700; text-align: center;
 }
 .hr-unit { font-size: 13px; color: var(--text-muted); }
+.hr-range-hint {
+  font-size: 10px;
+  color: #3a5a7a;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+.hr-range-default { color: #00ff88; opacity: 0.7; }
+
 
 /* ST */
 .st-controls { display: flex; flex-direction: column; gap: 8px; }

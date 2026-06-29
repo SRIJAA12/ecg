@@ -17,6 +17,7 @@ from __future__ import annotations
 import numpy as np
 from dataclasses import dataclass
 from models.ecg_state import ECGState, RhythmType, TransferFn
+from engine.rhythm_intelligence import get_wave_visibility
 
 
 # ─── Wave descriptor ──────────────────────────────────────────────────────────
@@ -433,12 +434,16 @@ class WaveformGenerator:
         t_center = c_r + t_offset_sec / rr_sec
         t_sigma = (params.t.sigma * qt_scale * np.sqrt(rr_sec)) / rr_sec
 
+        # Adaptive wave visibility: scale P and T amplitudes by rhythm + rate factors
+        p_factor, t_factor = get_wave_visibility(rhythm, state.heart_rate)
+
         # AVB3: dissociated P waves
         if rhythm == RhythmType.AVB3:
             p_phase = (t * 40.0 / 75.0) % 1.0
-            p_val = _gauss(p_phase, Wave(0.12, 0.13, 0.028 / 0.8))
+            p_val = _gauss(p_phase, Wave(0.12 * p_factor, 0.13, 0.028 / 0.8))
         else:
-            p_val = _gauss(t, Wave(params.p.amp, p_center, p_sigma)) if params.p else 0.0
+            p_amp = (params.p.amp * p_factor) if params.p else 0.0
+            p_val = _gauss(t, Wave(p_amp, p_center, p_sigma)) if params.p else 0.0
 
         # Torsades: rotate QRS amplitude with beat
         r_amp_mod = 1.0
@@ -460,7 +465,7 @@ class WaveformGenerator:
         r_extra_width_scaled = params.qrs_extra_width / rr_sec
         r_val = _gauss(t, Wave(params.r.amp * r_amp_mod, c_r, r_sigma + r_extra_width_scaled)) + extra_r_val
         s_val = _gauss(t, Wave(params.s.amp, s_center, s_sigma))
-        t_val = _gauss(t, Wave(params.t.amp, t_center, t_sigma))
+        t_val = _gauss(t, Wave(params.t.amp * t_factor, t_center, t_sigma))
 
         # Create scaled params for ST offset computation
         scaled_params = BeatParams(

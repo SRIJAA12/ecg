@@ -40,17 +40,34 @@
 }
 .monitor-header__btn:hover { opacity: 0.85; }
 
-/* Main */
+/* Main — column layout: canvas on top, bottom row below */
 .monitor-main {
   display: flex;
+  flex-direction: column;
   flex: 1;
   overflow: hidden;
 }
+
 .monitor-canvas-area {
   flex: 1;
   display: flex;
   align-items: center;
-  padding: 20px;
+  padding: 16px 20px 8px;
+  min-height: 0;
+}
+
+/* Bottom row: vitals + analysis panel side by side */
+.monitor-bottom-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 8px 20px 16px;
+  flex-shrink: 0;
+}
+
+.monitor-analysis-col {
+  flex-shrink: 0;
+  width: 240px;
 }
 
 /* Footer */

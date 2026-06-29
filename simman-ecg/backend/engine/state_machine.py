@@ -29,6 +29,11 @@ from engine.waveform_generator import WaveformGenerator
 from engine.lead_generator import generate_all_leads
 from engine.transfer_engine import TransferEngine
 from engine.noise_engine import inject
+from engine.rhythm_intelligence import (
+    get_rhythm_hr_limits,
+    get_rhythm_default_hr,
+    intelligence_payload,
+)
 from models.db_models import Event, HRTrend
 
 # ─── Config ───────────────────────────────────────────────────────────────────
@@ -57,6 +62,8 @@ class SimulationEngine:
         self._task:      asyncio.Task | None = None
         self._session_id: str = "default"
         self._hr_log_acc: float = 0.0   # accumulate time for HR trend logging
+        # JSON broadcast callback — set by WS handler, called after rhythm change
+        self._json_broadcast: Callable[[str], Awaitable[None]] | None = None
 
     # ─── Client management ────────────────────────────────────────────────────
 
@@ -65,6 +72,13 @@ class SimulationEngine:
 
     def remove_client(self, send_fn: BroadcastFn) -> None:
         self._clients.discard(send_fn)
+
+    def set_json_broadcast(self, fn: Callable[[str], Awaitable[None]]) -> None:
+        """Register a callback for JSON messages (ECG_INTELLIGENCE, etc.)."""
+        self._json_broadcast = fn
+
+    def clear_json_broadcast(self) -> None:
+        self._json_broadcast = None
 
     # ─── Instructor commands ──────────────────────────────────────────────────
 
@@ -148,6 +162,32 @@ class SimulationEngine:
                 )
                 state.rhythm = new_rhythm
                 print(f"[Engine] Rhythm changed: {old_rhythm} → {new_rhythm}")
+
+                # ── Auto-correct HR to be within the new rhythm's valid range ──
+                hr_min, hr_max = get_rhythm_hr_limits(new_rhythm)
+                default_hr = get_rhythm_default_hr(new_rhythm)
+                current_hr = state.heart_rate
+                if hr_max == 0:
+                    # Asystole — force HR to 0
+                    target_hr = 0.0
+                elif current_hr < hr_min or current_hr > hr_max:
+                    # Current HR outside allowed range — transition to default
+                    target_hr = float(default_hr)
+                else:
+                    target_hr = None  # HR already acceptable, no change needed
+
+                if target_hr is not None and target_hr != current_hr:
+                    print(f"[Engine] Auto HR correction: {current_hr:.1f} -> {target_hr:.1f} for {new_rhythm}")
+                    self._transfer.begin(
+                        "heart_rate",
+                        current_hr,
+                        target_hr,
+                        state.transfer_time,
+                        state.transfer_fn,
+                    )
+                    if state.transfer_time <= 0.0 or state.transfer_fn == TransferFn.IMMEDIATE:
+                        state.heart_rate = target_hr
+
                 # Set ischemia zone for STEMI rhythms
                 if new_rhythm == RhythmType.ANT_STEMI:
                     state.ischemia_zone = IschemiaZone.ANTERIOR

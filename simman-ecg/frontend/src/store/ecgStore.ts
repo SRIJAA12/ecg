@@ -2,10 +2,10 @@
 // Zustand store — mirrors ECGState from backend + manages sample ring buffer.
 
 import { create } from "zustand";
-import type { ECGState, ECGStateUpdate, LeadName, Severity, TransferFn } from "../types/ecgState";
-import type { DecodedPacket } from "../types/wsProtocol";
+import type { ECGState, ECGStateUpdate, LeadName, Severity, TransferFn, RhythmProfile } from "../types/ecgState";
+import type { DecodedPacket, ECGIntelligenceMsg } from "../types/wsProtocol";
 import { SAMPLE_RATE } from "../types/wsProtocol";
-import { RHYTHM_SEVERITY } from "../types/ecgState";
+import { RHYTHM_SEVERITY, RHYTHM_INTELLIGENCE } from "../types/ecgState";
 
 /** Ring buffer holding 10 seconds of samples per lead */
 const BUFFER_SECONDS = 10;
@@ -30,6 +30,9 @@ export interface ECGStore {
   transferFn:   TransferFn;
   connected:    boolean;
 
+  // Rhythm Intelligence
+  rhythmIntelligence: RhythmProfile | null;
+
   // Sample ring buffers (written by WS, read by canvas renderer)
   buffer:       Record<LeadName, Float32Array>;
   bufferHead:   number;     // next write index (wraps at BUFFER_SIZE)
@@ -38,10 +41,11 @@ export interface ECGStore {
   hrTrend:      number[];
 
   // Actions
-  onPacket:     (pkt: DecodedPacket) => void;
-  onState:      (state: ECGState) => void;
-  setConnected: (v: boolean) => void;
-  sendCommand:  (update: ECGStateUpdate) => void;   // set by wsClient
+  onPacket:       (pkt: DecodedPacket) => void;
+  onState:        (state: ECGState) => void;
+  onIntelligence: (payload: ECGIntelligenceMsg["payload"]) => void;
+  setConnected:   (v: boolean) => void;
+  sendCommand:    (update: ECGStateUpdate) => void;   // set by wsClient
 
   // WS send reference (set by wsClient)
   _sendFn:      ((update: ECGStateUpdate) => void) | null;
@@ -57,6 +61,7 @@ export const useECGStore = create<ECGStore>((set, get) => ({
   transferTime: 5,
   transferFn:   "SIGMOID",
   connected:  false,
+  rhythmIntelligence: RHYTHM_INTELLIGENCE["NSR"] ?? null,
   buffer:     makeLeadBuffer(),
   bufferHead: 0,
   hrTrend:    [],
@@ -102,9 +107,6 @@ export const useECGStore = create<ECGStore>((set, get) => ({
     });
     set((current) => ({
       ecgState: state,
-      // A SET_STATE snapshot contains the engine's current interpolated HR,
-      // not necessarily the instructor's target. Only initialise the target
-      // from the first snapshot; live packets own liveHeartRate thereafter.
       heartRate: current.ecgState === null
         ? Math.round(state.heart_rate)
         : current.heartRate,
@@ -113,7 +115,19 @@ export const useECGStore = create<ECGStore>((set, get) => ({
       rhythm:   state.rhythm,
       transferTime: state.transfer_time,
       transferFn: state.transfer_fn,
+      // Sync rhythm intelligence from static table on state snapshot
+      rhythmIntelligence: RHYTHM_INTELLIGENCE[state.rhythm as keyof typeof RHYTHM_INTELLIGENCE] ?? null,
     }));
+  },
+
+  onIntelligence: (payload) => {
+    // When backend sends ECG_INTELLIGENCE, update the local intelligence state
+    // The frontend static table is the primary source; the backend payload confirms the rhythm.
+    const profile = RHYTHM_INTELLIGENCE[payload.rhythm as keyof typeof RHYTHM_INTELLIGENCE];
+    if (profile) {
+      set({ rhythmIntelligence: profile });
+    }
+    console.log("[STORE] onIntelligence:", payload.rhythm, payload.p_wave, payload.t_wave);
   },
 
   setConnected: (v) => set({ connected: v }),
@@ -133,8 +147,13 @@ export const useECGStore = create<ECGStore>((set, get) => ({
         ? RHYTHM_SEVERITY[update.rhythm as keyof typeof RHYTHM_SEVERITY] ?? get().severity
         : get().severity,
       ecgState: currentState ? { ...currentState, ...update } : currentState,
+      // Eagerly update rhythm intelligence when rhythm changes
+      rhythmIntelligence: update.rhythm
+        ? RHYTHM_INTELLIGENCE[update.rhythm as keyof typeof RHYTHM_INTELLIGENCE] ?? get().rhythmIntelligence
+        : get().rhythmIntelligence,
     }));
   },
 
   _setSendFn: (fn) => set({ _sendFn: fn }),
 }));
+

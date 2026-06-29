@@ -1,4 +1,22 @@
 /* src/pages/UnifiedDashboard.css */
+
+/* ── Wave status badges (vitals strip) ──────────────────────────────────────── */
+.wave-card { min-width: 70px; }
+.vital-wave-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-top: 4px;
+  display: inline-block;
+}
+.wave-badge--present    { color: #00ff88; background: rgba(0,255,136,0.08); }
+.wave-badge--reduced    { color: #ffb700; background: rgba(255,183,0,0.08); }
+.wave-badge--absent     { color: #ff4444; background: rgba(255,68,68,0.08); }
+.vital-hr-range         { font-size: 9px; color: #3a5a7a; margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+
+
 .dashboard {
   display: flex;
   flex-direction: column;

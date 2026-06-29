@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { connect, disconnect } from "../engine/wsClient";
 import ECGTrack from "../components/monitor/ECGTrack";
 import VitalsPanel from "../components/monitor/VitalsPanel";
+import ECGAnalysisPanel from "../components/monitor/ECGAnalysisPanel";
 import { useECGStore } from "../store/ecgStore";
 import "./PatientMonitor.css";
 
@@ -36,7 +37,12 @@ export default function PatientMonitor() {
         <div className="monitor-canvas-area">
           <ECGTrack lead={lead} width={900} height={240} />
         </div>
-        <VitalsPanel />
+        <div className="monitor-bottom-row">
+          <VitalsPanel />
+          <div className="monitor-analysis-col">
+            <ECGAnalysisPanel compact />
+          </div>
+        </div>
       </main>
 
       <footer className="monitor-footer">

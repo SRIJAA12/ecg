@@ -16,6 +16,7 @@ import json
 import traceback
 from fastapi import WebSocket, WebSocketDisconnect
 from engine.state_machine import engine
+from engine.rhythm_intelligence import intelligence_payload
 from models.ecg_state import ECGStateUpdate
 
 
@@ -74,6 +75,12 @@ async def ecg_websocket(ws: WebSocket) -> None:
 
                 print(f"[WS] After apply: hr={engine.state.heart_rate:.1f}, rhythm={engine.state.rhythm}")
                 await ws.send_text(_state_snapshot())
+
+                # Emit ECG_INTELLIGENCE after any rhythm or HR change
+                await ws.send_text(json.dumps({
+                    "type": "ECG_INTELLIGENCE",
+                    "payload": intelligence_payload(engine.state.rhythm),
+                }))
 
             elif msg_type == "GET_STATE":
                 await ws.send_text(_state_snapshot())
